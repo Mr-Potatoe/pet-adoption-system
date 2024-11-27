@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { TextField, Button, Box, Typography, Container, Grid, Alert } from '@mui/material';
+import { TextField, Button, Box, Typography, Container, Grid, Alert, Link } from '@mui/material';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -23,8 +23,16 @@ const Login = () => {
     });
 
     const data = await response.json();
+
+    // Log the full response to inspect it
+    console.log('Login Response:', data);
+
     if (data.success) {
-      localStorage.setItem('token', data.token); // Save token
+      // Store token and user_id in localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user_id', data.user.user_id.toString());  // Make sure it's a string
+
+      // Redirect based on role
       router.push(data.user.role === 'admin' ? '/admin' : '/adopter');
     } else {
       setError(data.message);
@@ -46,7 +54,7 @@ const Login = () => {
         }}
       >
         <Typography variant="h5" gutterBottom>
-          Login
+          Login to PetAdopt
         </Typography>
 
         {error && <Alert severity="error" sx={{ width: '100%', marginBottom: 2 }}>{error}</Alert>}
@@ -89,6 +97,15 @@ const Login = () => {
             </Grid>
           </Grid>
         </form>
+
+        <Box sx={{ marginTop: 2 }}>
+          <Typography variant="body2" color="textSecondary">
+            Don't have an account?{' '}
+            <Link href="/register" underline="hover" sx={{ color: 'primary.main' }}>
+              Register here
+            </Link>
+          </Typography>
+        </Box>
       </Box>
     </Container>
   );

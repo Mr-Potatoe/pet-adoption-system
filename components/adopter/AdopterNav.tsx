@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppBar, Toolbar, Button, IconButton, Stack, Drawer, List, ListItem, ListItemText, Divider, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
-import { LightMode, DarkMode, Menu, Pets, Group, ManageSearch, ExitToApp } from '@mui/icons-material';
+import { LightMode, DarkMode, Menu, Pets, ManageSearch, ExitToApp } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 // Define light and dark theme configurations
@@ -79,17 +79,13 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
   const drawer = (
     <div>
       <List>
-        <ListItem component="button" onClick={() => router.push('/admin/pets')}>
+        <ListItem component="button" onClick={() => router.push('/adopter/pets')}>
           <Pets />
           <ListItemText primary="Manage Pets" />
         </ListItem>
-        <ListItem component="button" onClick={() => router.push('/admin/adoption-applications')}>
+        <ListItem component="button" onClick={() => router.push('/adopter/adoption-applications')}>
           <ManageSearch />
-          <ListItemText primary="Adoption Applications" />
-        </ListItem>
-        <ListItem component="button" onClick={() => router.push('/admin/users')}>
-          <Group />
-          <ListItemText primary="Manage Users" />
+          <ListItemText primary="Applications" />
         </ListItem>
       </List>
       <Divider />
@@ -98,7 +94,7 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
           {darkMode ? <DarkMode /> : <LightMode />}
           <ListItemText primary="Toggle Theme" />
         </ListItem>
-        <ListItem component="button" onClick={handleOpenLogoutModal}>  {/* Open modal on logout click */}
+        <ListItem component="button" onClick={handleOpenLogoutModal}>
           <ExitToApp />
           <ListItemText primary="Logout" />
         </ListItem>
@@ -110,26 +106,32 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
     <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
       <AppBar position="sticky">
         <Toolbar>
+          {/* System Title aligned to the left */}
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Pet Adoption System
+          </Typography>
+
           {/* Mobile Menu Icon */}
           <IconButton color="inherit" aria-label="open drawer" onClick={handleDrawerToggle} edge="start" sx={{ mr: 2, display: { sm: 'none' } }}>
             <Menu />
           </IconButton>
 
-          <Stack direction="row" spacing={2} sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' } }}>
-            <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/admin/pets')}>Manage Pets</Button>
-            <Button color="inherit" startIcon={<ManageSearch />} onClick={() => router.push('/admin/adoption-applications')}>Adoption Applications</Button>
-            <Button color="inherit" startIcon={<Group />} onClick={() => router.push('/admin/users')}>Manage Users</Button>
+          {/* Stack for Navigation (for larger screens) */}
+          <Stack direction="row" spacing={2} sx={{ display: { xs: 'none', sm: 'flex' }, mx: 'auto' }}>
+            <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/adopter/pets')}>Manage Pets</Button>
+            <Button color="inherit" startIcon={<ManageSearch />} onClick={() => router.push('/adopter/adoption-applications')}>Applications</Button>
           </Stack>
 
-          {/* Dark mode toggle for desktop */}
-          <IconButton color="inherit" onClick={handleToggleTheme} sx={{ display: { xs: 'none', sm: 'block' } }}>
-            {darkMode ? <DarkMode /> : <LightMode />}
-          </IconButton>
+          {/* Dark mode toggle and logout (aligned to the right for desktop) */}
+          <Stack direction="row" spacing={2} sx={{ ml: 'auto', display: { xs: 'none', sm: 'flex' } }}>
+            <IconButton color="inherit" onClick={handleToggleTheme}>
+              {darkMode ? <DarkMode /> : <LightMode />}
+            </IconButton>
 
-          {/* Logout button for desktop */}
-          <IconButton color="inherit" onClick={handleOpenLogoutModal}>  {/* Open modal on logout click */}
-            <ExitToApp />
-          </IconButton>
+            <IconButton color="inherit" onClick={handleOpenLogoutModal}>
+              <ExitToApp />
+            </IconButton>
+          </Stack>
         </Toolbar>
       </AppBar>
 

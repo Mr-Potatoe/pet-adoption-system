@@ -46,6 +46,21 @@ export async function POST(req: NextRequest) {
     // Generate JWT token
     const token = jwt.sign({ userId: user.user_id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
 
+    // Log the response before returning to check the data
+    console.log({
+      success: true,
+      message: 'Login successful.',
+      token,
+      user: {
+        user_id: user.user_id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+        profile_picture: user.profile_picture,
+      },
+    });
+
     return NextResponse.json<AuthResponse>({
       success: true,
       message: 'Login successful.',

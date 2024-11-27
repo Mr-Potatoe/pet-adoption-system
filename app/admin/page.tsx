@@ -1,171 +1,158 @@
-// pages/admin.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Container, Typography, Alert, List, ListItem, ListItemText, CircularProgress, Box, Button, TextField, Stack } from '@mui/material';
-import NavBar from '@/components/NavBar';
+import {
+  Container,
+  Typography,
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+} from '@mui/material';
+import NavBar from '@/components/admin/NavBar';
+import PetList from '@/components/admin/PetList';
+import AddPetModal from '@/components/admin/AddPetModal';
+import PetDetailsDialog from '@/components/admin/PetDetailsDialog';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Footer from '@/components/Footer';  // Import the Footer component
+import jwt from 'jsonwebtoken';
 
 const Admin = () => {
-    const [pets, setPets] = useState<any[]>([]);
-    const [error, setError] = useState<string>('');
-    const [loading, setLoading] = useState<boolean>(true);
-    const [newPet, setNewPet] = useState({
-        name: '',
-        breed: '',
-        age: '',
-        description: '',
-        medical_history: '',
-        status: '',
-        image_url: '',
-        user_id: '',
-        gender: '',
-        contact: '',
-        location: '',
-        age_unit: '',
-    });
-    const [darkMode, setDarkMode] = useState(false);
-    const router = useRouter();
+  const [pets, setPets] = useState<any[]>([]);
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darkMode') === 'true';
+    }
+    return false;
+  });
 
-    // Sync pets fetching
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            router.push('/login');
-        }
+  const [selectedPet, setSelectedPet] = useState<any | null>(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [petAdded, setPetAdded] = useState(false); // New state to track if a pet was added
 
-        const fetchPets = async () => {
-            try {
-                const response = await fetch('/api/pets'); // Adjust the API URL as needed
-                const data = await response.json();
-                if (data.success) {
-                    setPets(data.pets);
-                } else {
-                    setError(data.message);
-                }
-            } catch (error) {
-                setError('Error fetching pets');
-            } finally {
-                setLoading(false);
-            }
-        };
+  const router = useRouter();
 
-        fetchPets();
-    }, [router]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('darkMode', darkMode.toString());
+    }
+  }, [darkMode]);
 
-    // Handle form changes for adding new pet
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNewPet({
-            ...newPet,
-            [e.target.name]: e.target.value,
-        });
-    };
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
 
-    // Handle adding new pet
-    const handleAddPet = async () => {
-        try {
-            const response = await fetch('/api/pets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newPet),
-            });
-            const data = await response.json();
-            if (data.success) {
-                setPets((prevPets) => [...prevPets, data.pet]);
-                setNewPet({
-                    name: '',
-                    breed: '',
-                    age: '',
-                    description: '',
-                    medical_history: '',
-                    status: '',
-                    image_url: '',
-                    user_id: '',
-                    gender: '',
-                    contact: '',
-                    location: '',
-                    age_unit: '',
-                });
-            } else {
-                setError('Error adding pet');
-            }
-        } catch (error) {
-            setError('Error adding pet');
-        }
-    };
+    // Decode token and get user ID
+    try {
+      const decodedToken: any = jwt.decode(token);
+      const userId = decodedToken?.userId;
 
-    return (
+      if (!userId) {
+        setError('User is not authenticated.');
+        router.push('/login');
+        return;
+      }
+    } catch (error) {
+      setError('Invalid token. Please log in again.');
+      router.push('/login');
+      return;
+    }
 
-        <>
-            <NavBar onToggleTheme={setDarkMode} />
+    if (petAdded) {
+      setPetAdded(false); // Reset after fetch
+      return; // Skip fetch if a pet was just added
+    }
 
-            <ThemeProvider theme={darkMode ? createTheme({ palette: { mode: 'dark' } }) : createTheme({ palette: { mode: 'light' } })}>
-            <Container>
-                <Typography variant="h3" gutterBottom>
-                    Admin Dashboard
-                </Typography>
+    (async () => {
+      try {
+        const response = await fetch('/api/pets');
+        const data = await response.json();
+        if (data.success) setPets(data.pets);
+        else setError(data.message || 'Failed to load pets.');
+      } catch (error) {
+        setError('Error fetching pets.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [router, petAdded]); // Only re-run if router or petAdded changes
 
-                {/* Show error message if any */}
-                {error && <Alert severity="error" sx={{ marginBottom: 2 }}>{error}</Alert>}
+  const handleAddPet = (newPet: any) => {
+    setPets((prevPets) => [...prevPets, newPet]); // Optimistic update
+  };
 
-                {/* Pets List Section */}
-                <Typography variant="h5" gutterBottom>
-                    Pets List
-                </Typography>
+  // Define themes
+  const darkTheme = createTheme({ palette: { mode: 'dark' } });
+  const lightTheme = createTheme({ palette: { mode: 'light' } });
 
-                {loading ? (
-                    <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                        <CircularProgress />
-                    </Box>
-                ) : (
-                    <List>
-                        {pets.length > 0 ? (
-                            pets.map((pet: any) => (
-                                <ListItem key={pet.pet_id}>
-                                    <ListItemText primary={pet.name} />
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => router.push(`/admin/pet-details/${pet.pet_id}`)}
-                                    >
-                                        View Details
-                                    </Button>
-                                </ListItem>
-                            ))
-                        ) : (
-                            <Typography variant="body1">No pets available.</Typography>
-                        )}
-                    </List>
-                )}
+  return (
+    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+      <NavBar onToggleTheme={setDarkMode} />
+      <Container sx={{ position: 'relative' }}>
+        <Typography
+          variant="h3"
+          gutterBottom
+          sx={{
+            py: 2,
+            fontSize: {
+              xs: '2rem', // Extra small screens
+              sm: '2.5rem', // Small screens (mobile)
+              md: '3rem', // Medium screens (tablet)
+              lg: '3.5rem', // Large screens (desktop)
+            },
+          }}
+        >
+          Admin Dashboard
+        </Typography>
 
-                {/* Add New Pet Form */}
-                <Typography variant="h5" gutterBottom>
-                    Add New Pet
-                </Typography>
-                <TextField
-                    label="Name"
-                    fullWidth
-                    name="name"
-                    value={newPet.name}
-                    onChange={handleChange}
-                    margin="normal"
-                />
-                <TextField
-                    label="Breed"
-                    fullWidth
-                    name="breed"
-                    value={newPet.breed}
-                    onChange={handleChange}
-                    margin="normal"
-                />
-                {/* Add more fields as needed... */}
-                <Button variant="contained" onClick={handleAddPet} sx={{ marginTop: 2 }}>
-                    Add Pet
-                </Button>
-            </Container>
-            </ThemeProvider>
-        </>
-    );
+
+        {error && <Alert severity="error">{error}</Alert>}
+
+        <Typography variant="h5" gutterBottom>
+          Pets List
+        </Typography>
+
+        {/* Add New Pet button at the top-right */}
+        <Box position="absolute" top={20} right={20}>
+          <Button
+            variant="contained"
+            onClick={() => setOpenModal(true)}
+            sx={{
+              boxShadow: 3,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            Add New Pet
+          </Button>
+        </Box>
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <PetList pets={pets} onSelectPet={setSelectedPet} />
+        )}
+
+        <AddPetModal
+          open={openModal}
+          onClose={() => setOpenModal(false)}
+          onAddPet={handleAddPet}
+          setPetAdded={setPetAdded} // Pass the state setter to the modal
+        />
+        <PetDetailsDialog pet={selectedPet} onClose={() => setSelectedPet(null)} />
+      </Container>
+
+      <Footer />
+    </ThemeProvider>
+  );
 };
 
 export default Admin;

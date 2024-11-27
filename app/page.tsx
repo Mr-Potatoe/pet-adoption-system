@@ -1,10 +1,68 @@
-'use client'
+'use client';
 
 import { Box, Button, Grid, Typography, Card, CardContent } from '@mui/material';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+
+// Define the Pet interface
+interface Pet {
+  pet_id: number;
+  name: string;
+  image_url: string | null;
+  age: number;
+  age_unit: string; // e.g., "years" or "months"
+}
 
 export default function Home() {
+  const [pets, setPets] = useState<Pet[]>([]); // Specify the type of pets state
+  const [loading, setLoading] = useState(true);
+
+  // Fetch pets from /api/pets
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const response = await fetch('/api/pets');
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.pets)) {
+          setPets(data.pets); // Set the pet data from the API response
+        } else {
+          console.error('Error: Invalid data format', data);
+        }
+      } catch (error) {
+        console.error('Error fetching pets:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPets();
+  }, []);
+
+  // Fallback image URL
+  const fallbackImageUrl = '/pet-logo.png';
+
+  // Check if the image URL is valid (basic validation)
+  const isValidImageUrl = (url: string) => {
+    // Regular expression to check if the URL ends with a common image extension
+    const regex = /\.(jpeg|jpg|gif|png|bmp)$/i;
+    return regex.test(url);
+  };
+
+  // Handle image error to use fallback
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = fallbackImageUrl; // Set fallback image on error
+  };
+
+  // Handle image URL validation before rendering
+  const getImageUrl = (imageUrl: string | null) => {
+    if (imageUrl && isValidImageUrl(imageUrl)) {
+      return imageUrl;
+    }
+    return fallbackImageUrl; // Fallback if URL is invalid or null
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: { xs: 2, sm: 4 }, textAlign: 'center' }}>
       {/* Logo and Welcome Section */}
@@ -19,21 +77,45 @@ export default function Home() {
       {/* Featured Pets */}
       <Box sx={{ mb: 8 }}>
         <Typography variant="h4" sx={{ mb: 4 }}>Featured Pets</Typography>
-        <Grid container spacing={4} justifyContent="center">
-          {/* Replace these with dynamic data */}
-          {[{ name: 'Max - Golden Retriever', age: '2 years', image: '/square.png' }, { name: 'Bella - Labrador', age: '3 years', image: '/nano.png' }].map((pet, index) => (
-            <Grid item key={index}>
-              <Card sx={{ width: 240 }}>
-                <Image src={pet.image} alt={`Pet ${index + 1}`} width={240} height={200} className="rounded-lg" />
-                <CardContent>
-                  <Typography variant="h6">{pet.name}</Typography>
-                  <Typography variant="body2" color="textSecondary">Age: {pet.age}</Typography>
-                  <Button variant="contained" sx={{ mt: 2 }} fullWidth>Adopt Now</Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        {loading ? (
+          <Typography variant="h6" color="textSecondary">Loading pets...</Typography>
+        ) : (
+          <Grid container spacing={4} justifyContent="center">
+            {pets.length === 0 ? (
+              <Typography variant="h6" color="textSecondary">No pets available for adoption at the moment.</Typography>
+            ) : (
+              pets.map((pet) => (
+                <Grid item key={pet.pet_id} xs={12} sm={6} md={4} lg={3}>
+                  <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: 380, justifyContent: 'space-between' }}>
+
+                    {/* Image Section */}
+                    <Box sx={{ position: 'relative', width: '100%', height: 400, overflow: 'hidden' }}>
+                      <Image
+                        src={getImageUrl(pet.image_url)}  // Validate image URL here
+                        alt={`Pet ${pet.name}`}
+                        layout="fill" // Ensures the image takes the full space of the container
+                        objectFit="cover" // Ensures the image covers the entire container without distortion
+                        objectPosition="center" // Centers the image within the container
+                        onError={handleImageError}  // Add the error handler here
+                        style={{
+                          borderRadius: '8px'  // Optional: for rounded corners
+                        }}
+                      />
+                    </Box>
+
+                    {/* Card Content Section */}
+                    <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                      <Typography variant="h6">{pet.name}</Typography>
+                      <Typography variant="body2" color="textSecondary">Age: {pet.age} {pet.age_unit}</Typography>
+                      <Button variant="contained" sx={{ mt: 2 }} fullWidth>Adopt Now</Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))
+
+            )}
+          </Grid>
+        )}
       </Box>
 
       {/* Adoption Process */}

@@ -1,12 +1,37 @@
-'use client'
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppBar, Toolbar, Button, IconButton, Stack, Drawer, List, ListItem, ListItemText, Divider, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
-import { LightMode, DarkMode, Menu, Pets, Group, ManageSearch, ExitToApp } from '@mui/icons-material';
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  IconButton,
+  Stack,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from '@mui/material';
+import {
+  LightMode,
+  DarkMode,
+  Menu,
+  Pets,
+  Group,
+  ManageSearch,
+  ExitToApp,
+} from '@mui/icons-material';
+import { ButtonBase } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Define light and dark theme configurations
+// Define light and dark themes
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -22,34 +47,28 @@ const darkTheme = createTheme({
 const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void }) => {
   const [darkMode, setDarkMode] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openLogoutModal, setOpenLogoutModal] = useState(false);  // State for the logout confirmation modal
+  const [openLogoutModal, setOpenLogoutModal] = useState(false);
   const router = useRouter();
 
-  // Sync theme with localStorage and HTML class
+  // Sync theme with localStorage and system preferences
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setDarkMode(savedTheme === 'dark');
-    } else {
-      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(prefersDarkMode);
-    }
+    setDarkMode(savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches));
   }, []);
 
-  // Set the dark mode on the HTML element
+  // Update HTML class and localStorage on theme toggle
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
   const handleToggleTheme = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
-    onToggleTheme(newDarkMode);
+    setDarkMode(!darkMode);
+    onToggleTheme(!darkMode);
   };
 
   const handleDrawerToggle = () => {
@@ -57,48 +76,33 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
   };
 
   const handleLogout = () => {
-    // Clear authentication token or session (assuming it's stored in localStorage)
-    localStorage.removeItem('token'); // Replace 'token' with your actual key
-    // Redirect to the homepage after logout
-    router.push('/'); // This will redirect to the home page (app/page.tsx)
-  };
-
-  const handleOpenLogoutModal = () => {
-    setOpenLogoutModal(true);  // Open the logout confirmation modal
-  };
-
-  const handleCloseLogoutModal = () => {
-    setOpenLogoutModal(false);  // Close the logout confirmation modal
-  };
-
-  const handleConfirmLogout = () => {
-    handleLogout();
-    handleCloseLogoutModal();  // Close the modal after confirming
+    localStorage.removeItem('token');
+    router.push('/');
   };
 
   const drawer = (
     <div>
       <List>
-        <ListItem component="button" onClick={() => router.push('/admin/pets')}>
+        <ListItem component={ButtonBase} onClick={() => router.push('/admin/pets')}>
           <Pets />
           <ListItemText primary="Manage Pets" />
         </ListItem>
-        <ListItem component="button" onClick={() => router.push('/admin/adoption-applications')}>
+        <ListItem component={ButtonBase} onClick={() => router.push('/admin/adoption-applications')}>
           <ManageSearch />
           <ListItemText primary="Adoption Applications" />
         </ListItem>
-        <ListItem component="button" onClick={() => router.push('/admin/users')}>
+        <ListItem component={ButtonBase} onClick={() => router.push('/admin/users')}>
           <Group />
           <ListItemText primary="Manage Users" />
         </ListItem>
       </List>
       <Divider />
       <List>
-        <ListItem component="button" onClick={handleToggleTheme}>
+        <ListItem component={ButtonBase} onClick={handleToggleTheme}>
           {darkMode ? <DarkMode /> : <LightMode />}
           <ListItemText primary="Toggle Theme" />
         </ListItem>
-        <ListItem component="button" onClick={handleOpenLogoutModal}>  {/* Open modal on logout click */}
+        <ListItem component={ButtonBase} onClick={() => setOpenLogoutModal(true)}>
           <ExitToApp />
           <ListItemText primary="Logout" />
         </ListItem>
@@ -110,51 +114,62 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
     <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
       <AppBar position="sticky">
         <Toolbar>
-          {/* Title */}
+          {/* Navbar Title */}
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Pet Adoption System
           </Typography>
 
-          {/* Mobile Menu Icon */}
-          <IconButton color="inherit" aria-label="open drawer" onClick={handleDrawerToggle} edge="start" sx={{ mr: 2, display: { sm: 'none' } }}>
+          {/* Mobile Menu Button */}
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ display: { xs: 'flex', sm: 'none' } }}
+          >
             <Menu />
           </IconButton>
 
-          {/* Navigation Buttons (aligned to the right) */}
-          <Stack direction="row" spacing={2} sx={{ display: { xs: 'none', sm: 'flex' }, mx: 'auto' }}>
-            <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/admin/pets')}>Manage Pets</Button>
-            <Button color="inherit" startIcon={<ManageSearch />} onClick={() => router.push('/admin/adoption-applications')}>Adoption Applications</Button>
-            <Button color="inherit" startIcon={<Group />} onClick={() => router.push('/admin/users')}>Manage Users</Button>
+          {/* Desktop Navigation */}
+          <Stack direction="row" spacing={2} sx={{ display: { xs: 'none', sm: 'flex' } }}>
+            <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/admin/pets')}>
+              Manage Pets
+            </Button>
+            <Button color="inherit" startIcon={<ManageSearch />} onClick={() => router.push('/admin/adoption-applications')}>
+              Adoption Applications
+            </Button>
+            <Button color="inherit" startIcon={<Group />} onClick={() => router.push('/admin/users')}>
+              Manage Users
+            </Button>
           </Stack>
 
-          {/* Dark mode toggle for desktop */}
-          <IconButton color="inherit" onClick={handleToggleTheme} sx={{ display: { xs: 'none', sm: 'block' } }}>
+          {/* Theme Toggle */}
+          <IconButton color="inherit" onClick={handleToggleTheme} sx={{ ml: 1 }}>
             {darkMode ? <DarkMode /> : <LightMode />}
           </IconButton>
 
-          {/* Logout button for desktop */}
-          <IconButton color="inherit" onClick={handleOpenLogoutModal}>  {/* Open modal on logout click */}
+          {/* Logout Button */}
+          <IconButton color="inherit" onClick={() => setOpenLogoutModal(true)} sx={{ ml: 1 }}>
             <ExitToApp />
           </IconButton>
         </Toolbar>
       </AppBar>
 
-      {/* Drawer for mobile */}
+      {/* Drawer for Mobile Navigation */}
       <Drawer anchor="left" open={mobileOpen} onClose={handleDrawerToggle} sx={{ display: { sm: 'none' } }}>
         {drawer}
       </Drawer>
 
       {/* Logout Confirmation Modal */}
-      <Dialog open={openLogoutModal} onClose={handleCloseLogoutModal}>
+      <Dialog open={openLogoutModal} onClose={() => setOpenLogoutModal(false)}>
         <DialogTitle>Logout</DialogTitle>
         <DialogContent>
           <Typography>Are you sure you want to logout?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseLogoutModal} color="primary">
+          <Button onClick={() => setOpenLogoutModal(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleConfirmLogout} color="primary">
+          <Button onClick={handleLogout} color="primary">
             Confirm
           </Button>
         </DialogActions>

@@ -149,7 +149,6 @@ const Admin = () => {
         />
         <PetDetailsDialog pet={selectedPet} onClose={() => setSelectedPet(null)} />
       </Container>
-
       <Footer />
     </ThemeProvider>
   );

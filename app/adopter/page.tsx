@@ -138,35 +138,10 @@ const Adopter = () => {
               <CircularProgress />
             </Box>
           ) : (
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              sx={{
-                width: '100%',
-                minHeight: '100vh',  // Ensure it takes the full viewport height
-                padding: { xs: 2, sm: 3, md: 4 }, // Responsive padding for all screen sizes
-                boxSizing: 'border-box',
-              }}
-            >
-              <Grid
-                container
-                spacing={4}
-                sx={{
-                  justifyContent: 'center',  // Ensure the content is centered
-                  alignItems: 'flex-start',  // Align items to the start (top) for better vertical alignment
-                  width: '100%',
-                  maxWidth: 1200,  // Set a max-width to prevent the content from stretching too wide on large screens
-                  marginLeft: 'auto', // Ensure equal left and right margin
-                  marginRight: 'auto', // Ensure equal left and right margin
-                  padding: { xs: 2, sm: 3 }, // Add padding inside the grid container
-                }}
-              >
-                {/* Pass the entire pets array to PetList */}
-                <PetList pets={pets} onViewDetails={handleViewDetails} />
-              </Grid>
-            </Box>
-
+            <>
+              {/* Pass the entire pets array to PetList */}
+              <PetList pets={pets} onViewDetails={handleViewDetails} />
+            </>
           )}
 
           {/* Modals */}

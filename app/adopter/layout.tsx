@@ -28,12 +28,37 @@ const Layout = ({ children }: LayoutProps) => {
   }, [darkMode]);
 
   return (
-    <ThemeProvider theme={darkMode ? createTheme({ palette: { mode: 'dark' } }) : createTheme({ palette: { mode: 'light' } })}>
-      <NavBar onToggleTheme={setDarkMode} />
-      <Container maxWidth="lg" sx={{ py: 2 }}>
-        {children}
-      </Container>
-      <Footer darkMode={darkMode} />
+    <ThemeProvider
+      theme={
+        darkMode
+          ? createTheme({ palette: { mode: 'dark' } })
+          : createTheme({ palette: { mode: 'light' } })
+      }
+    >
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh', // Full height of the viewport
+        }}
+      >
+        {/* Navigation Bar */}
+        <NavBar onToggleTheme={setDarkMode} />
+
+        {/* Main Content */}
+        <Container
+          maxWidth="lg"
+          sx={{
+            flex: 1, // Ensures the container grows to fill space
+            py: 2, // Adds vertical padding
+          }}
+        >
+          {children}
+        </Container>
+
+        {/* Footer */}
+        <Footer darkMode={darkMode} />
+      </div>
     </ThemeProvider>
   );
 };

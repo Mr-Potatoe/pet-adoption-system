@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Typography, Alert, Box, CircularProgress, Snackbar } from '@mui/material';
-import PetList from '@/components/admin/PetList';
-import PetDetailsDialog from '@/components/admin/PetDetailsDialog';
+import PetList from '@/components/admin/pets-page/PetList';
+import PetDetailsDialog from '@/components/admin/pets-page/PetDetailsDialog';
 import jwt from 'jsonwebtoken';
 
 const AdminPetsPage = () => {
@@ -189,7 +189,7 @@ const AdminPetsPage = () => {
   return (
     <Container sx={{ position: 'relative' }}>
       <Typography variant="h3" gutterBottom sx={{ py: 2 }}>
-        Pets List
+        Pets
       </Typography>
 
       {error && <Alert severity="error">{error}</Alert>}

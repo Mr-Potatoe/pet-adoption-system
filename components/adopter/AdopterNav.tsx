@@ -81,7 +81,7 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
       <List>
         <ListItem component="button" onClick={() => router.push('/adopter/pets')}>
           <Pets />
-          <ListItemText primary="Manage Pets" />
+          <ListItemText primary="Your Pets" />
         </ListItem>
         <ListItem component="button" onClick={() => router.push('/adopter/adoption-applications')}>
           <ManageSearch />
@@ -136,7 +136,7 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
           {/* Stack for Navigation (for larger screens) */}
           <Stack direction="row" spacing={2} sx={{ display: { xs: 'none', sm: 'flex' }, mx: 'auto' }}>
             <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/adopter/pets')}>
-              Manage Pets
+             Your Pets
             </Button>
             <Button color="inherit" startIcon={<ManageSearch />} onClick={() => router.push('/adopter/adoption-applications')}>
               Applications

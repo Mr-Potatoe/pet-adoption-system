@@ -1,13 +1,10 @@
-// page.tsx
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
 import PetList from '@/components/adopter/PetList';
-import PetDetailsModal from '@/components/adopter/PetDetailsModal';
-import AddPetModal from '@/components/adopter/AddPetModal';
+import PetDetailsModal from '@/components/adopter/pets-page/PetDetailsModal';
 import jwt from 'jsonwebtoken';
 
 const AdopterPage = () => {
@@ -16,19 +13,18 @@ const AdopterPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPet, setSelectedPet] = useState<any | null>(null);
   const [openViewModal, setOpenViewModal] = useState(false);
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [newPet, setNewPet] = useState({ name: '', breed: '', age: '', age_unit: '' });
   const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
+      return;
     }
 
     const fetchPets = async () => {
       try {
-        const response = await fetch('/api/pets');
+        const response = await fetch('/api/pets?status=available'); // Fetch only available pets
         const data = await response.json();
         if (data.success) {
           setPets(data.pets);
@@ -55,14 +51,7 @@ const AdopterPage = () => {
     setSelectedPet(null);
   };
 
-  const handleOpenAddModal = () => setOpenAddModal(true);
-  const handleCloseAddModal = () => setOpenAddModal(false);
-
-  const handleChangeNewPet = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewPet({ ...newPet, [e.target.name]: e.target.value });
-  };
-
-  const handleAddNewPet = async () => {
+  const handleAdoptPet = async (petId: string) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -78,37 +67,32 @@ const AdopterPage = () => {
         return;
       }
 
-      const petWithDetails = { ...newPet, status: 'available', user_id: userId };
-
-      const response = await fetch('/api/pets', {
+      const response = await fetch(`/api/adopt-pet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(petWithDetails),
+        body: JSON.stringify({ petId, adopterId: userId }),
       });
 
       const data = await response.json();
       if (data.success) {
-        setPets((prevPets) => [...prevPets, data.pet]);
-        handleCloseAddModal();
+        setPets((prevPets) => prevPets.filter((pet) => pet.pet_id !== petId)); // Remove adopted pet from the list
+        setError('');
+        handleCloseViewModal();
       } else {
         setError(data.message);
       }
     } catch (err) {
-      setError('Error adding pet');
+      setError('Error adopting pet');
     }
   };
 
   return (
     <>
       <Typography variant="h3" gutterBottom align="center" color="primary.main" sx={{ py: 4 }}>
-        Available Pets
+        Available Pets for Adoption
       </Typography>
-
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-        <Button variant="contained" color="primary" onClick={handleOpenAddModal}>Post a New Pet</Button>
-      </Box>
 
       {error && <Alert severity="error" sx={{ marginBottom: 2 }}>{error}</Alert>}
 
@@ -120,8 +104,12 @@ const AdopterPage = () => {
         <PetList pets={pets} onViewDetails={handleViewDetails} />
       )}
 
-      <PetDetailsModal open={openViewModal} pet={selectedPet} onClose={handleCloseViewModal} />
-      <AddPetModal open={openAddModal} petData={newPet} onChange={handleChangeNewPet} onSubmit={handleAddNewPet} onClose={handleCloseAddModal} />
+      <PetDetailsModal 
+        open={openViewModal} 
+        pet={selectedPet} 
+        onClose={handleCloseViewModal} 
+        onAdopt={handleAdoptPet} 
+      />
     </>
   );
 };

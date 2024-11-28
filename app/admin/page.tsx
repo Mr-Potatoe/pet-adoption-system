@@ -1,5 +1,4 @@
-// app/admin/page.tsx
-'use client'
+'use client';
 import { useEffect, useState } from 'react';
 import { Box, Grid, Card, CardContent, Typography, CircularProgress } from '@mui/material';
 import dynamic from 'next/dynamic';
@@ -52,13 +51,24 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
       chart: {
         type: 'pie',
         toolbar: { show: false },
+        background: darkMode ? '#121212' : '#ffffff', // Adjust background color
       },
       labels,
       legend: {
         position: 'bottom',
+        labels: {
+          colors: darkMode ? ['#ffffff'] : ['#000000'], // Adjust legend text color
+        },
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '50%', // Optionally adjust pie chart size
+          },
+        },
       },
       theme: {
-        mode: darkMode ? 'dark' : 'light',
+        mode: darkMode ? 'dark' : 'light', // Ensure chart theme is applied
       },
       responsive: [
         {
@@ -92,18 +102,75 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
   );
 
   // Define themes for light and dark modes
-  const darkTheme = createTheme({ palette: { mode: 'dark' } });
-  const lightTheme = createTheme({ palette: { mode: 'light' } });
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+      background: {
+        default: '#121212',
+        paper: '#1D1D1D',
+      },
+      text: {
+        primary: '#fff',
+        secondary: '#b0b0b0',
+      },
+    },
+    typography: {
+      fontFamily: 'Roboto, sans-serif',
+      h4: {
+        fontWeight: 700,
+        fontSize: '2rem',
+        color: '#fff',
+      },
+      h6: {
+        fontWeight: 600,
+        fontSize: '1.25rem',
+        color: '#fff',
+      },
+    },
+  });
+
+  const lightTheme = createTheme({
+    palette: {
+      mode: 'light',
+      background: {
+        default: '#ffffff',
+        paper: '#f5f5f5',
+      },
+      text: {
+        primary: '#000',
+        secondary: '#4f4f4f',
+      },
+    },
+    typography: {
+      fontFamily: 'Roboto, sans-serif',
+      h4: {
+        fontWeight: 700,
+        fontSize: '2rem',
+        color: '#000',
+      },
+      h6: {
+        fontWeight: 600,
+        fontSize: '1.25rem',
+        color: '#000',
+      },
+    },
+  });
 
   return (
     <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
-      <Box p={4}>
+      <Box p={6}>
         <Typography variant="h4" gutterBottom align="center">
           Admin Analytics Dashboard
         </Typography>
         <Grid container spacing={4}>
           <Grid item xs={12} md={4}>
-            <Card>
+            <Card
+              sx={{
+                backgroundColor: (theme) => theme.palette.background.paper,
+                color: (theme) => theme.palette.text.primary,
+                boxShadow: 3, // Added box shadow for better visibility
+              }}
+            >
               <CardContent>
                 <Typography variant="h6" gutterBottom align="center">
                   User Roles
@@ -114,7 +181,13 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Card>
+            <Card
+              sx={{
+                backgroundColor: (theme) => theme.palette.background.paper,
+                color: (theme) => theme.palette.text.primary,
+                boxShadow: 3, // Added box shadow for better visibility
+              }}
+            >
               <CardContent>
                 <Typography variant="h6" gutterBottom align="center">
                   Pet Status
@@ -125,7 +198,13 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Card>
+            <Card
+              sx={{
+                backgroundColor: (theme) => theme.palette.background.paper,
+                color: (theme) => theme.palette.text.primary,
+                boxShadow: 3, // Added box shadow for better visibility
+              }}
+            >
               <CardContent>
                 <Typography variant="h6" gutterBottom align="center">
                   Adoption Applications

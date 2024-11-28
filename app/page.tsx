@@ -26,7 +26,7 @@ export default function Home() {
         const data = await response.json();
 
         if (data.success && Array.isArray(data.pets)) {
-          setPets(data.pets); // Set the pet data from the API response
+          setPets(data.pets.slice(0, 5)); // Limit to the latest 5 pets
         } else {
           console.error('Error: Invalid data format', data);
         }
@@ -45,7 +45,6 @@ export default function Home() {
 
   // Check if the image URL is valid (basic validation)
   const isValidImageUrl = (url: string) => {
-    // Regular expression to check if the URL ends with a common image extension
     const regex = /\.(jpeg|jpg|gif|png|bmp)$/i;
     return regex.test(url);
   };
@@ -64,11 +63,22 @@ export default function Home() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: { xs: 2, sm: 4 }, textAlign: 'center' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: { xs: 2, sm: 4 },
+        textAlign: 'center',
+      }}
+    >
       {/* Logo and Welcome Section */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 6 }}>
         <Image src="/pet-logo.png" alt="Pet Adoption Logo" width={180} height={180} priority />
-        <Typography variant="h3" sx={{ mt: 4 }}>Welcome to PetAdopt!</Typography>
+        <Typography variant="h3" sx={{ mt: 4 }}>
+          Welcome to PetAdopt!
+        </Typography>
         <Typography variant="body1" sx={{ mt: 2 }}>
           Find your new furry friend today! Explore pets available for adoption and start the journey of making a difference.
         </Typography>
@@ -76,47 +86,72 @@ export default function Home() {
 
       {/* Featured Pets */}
       <Box sx={{ mb: 8 }}>
-        <Typography variant="h4" sx={{ mb: 4 }}>Featured Pets</Typography>
+        <Typography variant="h4" sx={{ mb: 4 }}>
+          Featured Pets
+        </Typography>
         {loading ? (
-          <Typography variant="h6" color="textSecondary">Loading pets...</Typography>
+          <Typography variant="h6" color="textSecondary">
+            Loading pets...
+          </Typography>
         ) : (
           <Grid container spacing={4} justifyContent="center">
             {pets.length === 0 ? (
-              <Typography variant="h6" color="textSecondary">No pets available for adoption at the moment.</Typography>
+              <Typography variant="h6" color="textSecondary">
+                No pets available for adoption at the moment.
+              </Typography>
             ) : (
               pets.map((pet) => (
                 <Grid item key={pet.pet_id} xs={12} sm={6} md={4} lg={3}>
-                  <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: 380, justifyContent: 'space-between' }}>
-
+                  <Card
+                    sx={{
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: 380,
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     {/* Image Section */}
                     <Box sx={{ position: 'relative', width: '100%', height: 400, overflow: 'hidden' }}>
                       <Image
-                        src={getImageUrl(pet.image_url)}  // Validate image URL here
+                        src={getImageUrl(pet.image_url)} // Validate image URL here
                         alt={`Pet ${pet.name}`}
                         layout="fill" // Ensures the image takes the full space of the container
                         objectFit="cover" // Ensures the image covers the entire container without distortion
                         objectPosition="center" // Centers the image within the container
-                        onError={handleImageError}  // Add the error handler here
+                        onError={handleImageError} // Add the error handler here
                         style={{
-                          borderRadius: '8px'  // Optional: for rounded corners
+                          borderRadius: '8px', // Optional: for rounded corners
                         }}
                       />
                     </Box>
 
                     {/* Card Content Section */}
-                    <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                    <CardContent
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        height: '100%',
+                      }}
+                    >
                       <Typography variant="h6">{pet.name}</Typography>
-                      <Typography variant="body2" color="textSecondary">Age: {pet.age} {pet.age_unit}</Typography>
-                      <Button variant="contained" sx={{ mt: 2 }} fullWidth>Adopt Now</Button>
+                      <Typography variant="body2" color="textSecondary">
+                        Age: {pet.age} {pet.age_unit}
+                      </Typography>
+                      <Button variant="contained" sx={{ mt: 2 }} fullWidth>
+                        Adopt Now
+                      </Button>
                     </CardContent>
                   </Card>
                 </Grid>
               ))
-
             )}
           </Grid>
         )}
       </Box>
+
+
 
       {/* Adoption Process */}
       <Box sx={{ mb: 12 }}>

@@ -22,43 +22,43 @@ interface Pet {
 
 // POST handler to add a new pet
 export async function POST(req: NextRequest) {
-    const data = await req.json();
-  
-    // Validate required fields
-    const requiredFields = ['name', 'age', 'status', 'user_id', 'age_unit'];
-    const missingFields = requiredFields.filter((field) => !data[field]);
-  
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { success: false, message: `Missing required fields: ${missingFields.join(', ')}` },
-        { status: 400 }
-      );
-    }
-  
-    try {
-      const insertQuery = `
-        INSERT INTO pets (
-          name, breed, age, description, medical_history, status, image_url, 
-          user_id, gender, contact, location, age_unit, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-      `;
-  
-      const result = await query(insertQuery, [
-        data.name,
-        data.breed || null,
-        data.age,
-        data.description || null,
-        data.medical_history || null,
-        data.status,
-        data.image_url || null,
-        data.user_id,
-        data.gender || null,
-        data.contact || null,
-        data.location || null,
-        data.age_unit,
-      ]);
-  
-      // Return success response
+  const data = await req.json();
+
+  // Validate required fields
+  const requiredFields = ['name', 'age', 'status', 'user_id', 'age_unit'];
+  const missingFields = requiredFields.filter((field) => data[field] == null); // Handle null or undefined
+
+  if (missingFields.length > 0) {
+    return NextResponse.json(
+      { success: false, message: `Missing required fields: ${missingFields.join(', ')}` },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const insertQuery = `
+      INSERT INTO pets (
+        name, breed, age, description, medical_history, status, image_url, 
+        user_id, gender, contact, location, age_unit, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `;
+
+    const result = await query(insertQuery, [
+      data.name,
+      data.breed || null,
+      data.age,
+      data.description || null,
+      data.medical_history || null,
+      data.status,
+      data.image_url || null,
+      data.user_id,
+      data.gender || null,
+      data.contact || null,
+      data.location || null,
+      data.age_unit,
+    ]);
+
+    if ((result as any).insertId) {
       return NextResponse.json({
         success: true,
         message: 'Pet added successfully',
@@ -68,15 +68,17 @@ export async function POST(req: NextRequest) {
           created_at: new Date().toISOString(),
         },
       });
-    } catch (error) {
-      console.error('Error adding pet:', error);
-      return NextResponse.json(
-        { success: false, message: 'Error adding pet' },
-        { status: 500 }
-      );
+    } else {
+      return NextResponse.json({ success: false, message: 'Failed to insert pet' }, { status: 500 });
     }
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: 'Error adding pet' },
+      { status: 500 }
+    );
   }
-// GET all pets
+}
+
 // GET all available pets
 export async function GET(req: NextRequest) {
   try {
@@ -100,63 +102,45 @@ export async function GET(req: NextRequest) {
 
 // PUT handler
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-    const { id } = params;
-    const data = await req.json();
-  
-    try {
-      const updateQuery = `
+  const { id } = params;
+  const data = await req.json();
+
+  try {
+    const updateQuery = `
         UPDATE pets 
         SET name = ?, breed = ?, age = ?, description = ?, medical_history = ?, status = ?, 
             image_url = ?, gender = ?, contact = ?, location = ?, age_unit = ? 
         WHERE pet_id = ?
       `;
-  
-      const result = await query(
-        updateQuery,
-        [
-          data.name,
-          data.breed,
-          data.age,
-          data.description,
-          data.medical_history,
-          data.status,
-          data.image_url,
-          data.gender,
-          data.contact,
-          data.location,
-          data.age_unit,
-          id,
-        ]
-      );
-  
-      if ((result as any).affectedRows === 0) {
-        return NextResponse.json({ message: 'Pet not found or not updated' }, { status: 404 });
-      }
-  
-      return NextResponse.json({ message: 'Pet updated successfully' });
-    } catch (error) {
-      console.error(error);
-      return NextResponse.json({ message: 'Error updating pet' }, { status: 500 });
-    }
-  }
 
-// DELETE handler
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
-
-  try {
-    const result = await query('DELETE FROM pets WHERE pet_id = ?', [id]);
+    const result = await query(
+      updateQuery,
+      [
+        data.name,
+        data.breed,
+        data.age,
+        data.description,
+        data.medical_history,
+        data.status,
+        data.image_url,
+        data.gender,
+        data.contact,
+        data.location,
+        data.age_unit,
+        id,
+      ]
+    );
 
     if ((result as any).affectedRows === 0) {
-      return NextResponse.json({ message: 'Pet not found' }, { status: 404 });
+      return NextResponse.json({ message: 'Pet not found or not updated' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Pet deleted successfully' });
+    return NextResponse.json({ message: 'Pet updated successfully' });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ message: 'Error deleting pet' }, { status: 500 });
+    return NextResponse.json({ message: 'Error updating pet' }, { status: 500 });
   }
 }
 
 
-  
+

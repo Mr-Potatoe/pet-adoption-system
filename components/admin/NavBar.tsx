@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';  // usePathname hook
 import {
   AppBar,
   Toolbar,
@@ -27,6 +27,7 @@ import {
   Group,
   ManageSearch,
   ExitToApp,
+  Dashboard,
 } from '@mui/icons-material';
 import { ButtonBase } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -48,7 +49,8 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
   const [darkMode, setDarkMode] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openLogoutModal, setOpenLogoutModal] = useState(false);
-  const router = useRouter();
+  const [activePath, setActivePath] = useState('');
+  const pathname = usePathname(); // Using usePathname to get the current path
 
   // Sync theme with localStorage and system preferences
   useEffect(() => {
@@ -66,6 +68,11 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
+  // Track the current active route
+  useEffect(() => {
+    setActivePath(pathname || '');
+  }, [pathname]);
+
   const handleToggleTheme = () => {
     setDarkMode(!darkMode);
     onToggleTheme(!darkMode);
@@ -77,21 +84,49 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    router.push('/');
+    window.location.href = '/';  // Force navigation after logout
   };
 
   const drawer = (
     <div>
       <List>
-        <ListItem component={ButtonBase} onClick={() => router.push('/admin/pets')}>
+        <ListItem
+          component={ButtonBase}
+          onClick={() => window.location.href = '/admin'}
+          sx={{
+            backgroundColor: activePath === '/admin' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+          }}
+        >
+          <Dashboard />
+          <ListItemText primary="Dashboard" />
+        </ListItem>
+        <ListItem
+          component={ButtonBase}
+          onClick={() => window.location.href = '/admin/pets'}
+          sx={{
+            backgroundColor: activePath === '/admin/pets' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+          }}
+        >
           <Pets />
           <ListItemText primary="Manage Pets" />
         </ListItem>
-        <ListItem component={ButtonBase} onClick={() => router.push('/admin/adoption-applications')}>
+        <ListItem
+          component={ButtonBase}
+          onClick={() => window.location.href = '/admin/adoption-applications'}
+          sx={{
+            backgroundColor: activePath === '/admin/adoption-applications' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+          }}
+        >
           <ManageSearch />
           <ListItemText primary="Adoption Applications" />
         </ListItem>
-        <ListItem component={ButtonBase} onClick={() => router.push('/admin/users')}>
+        <ListItem
+          component={ButtonBase}
+          onClick={() => window.location.href = '/admin/users'}
+          sx={{
+            backgroundColor: activePath === '/admin/users' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+          }}
+        >
           <Group />
           <ListItemText primary="Manage Users" />
         </ListItem>
@@ -131,13 +166,44 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
 
           {/* Desktop Navigation */}
           <Stack direction="row" spacing={2} sx={{ display: { xs: 'none', sm: 'flex' } }}>
-            <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/admin/pets')}>
+            <Button
+              color="inherit"
+              startIcon={<Dashboard />}
+              onClick={() => window.location.href = '/admin'}
+              sx={{
+                backgroundColor: activePath === '/admin' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+              }}
+            >
+              Dashboard
+            </Button>
+            <Button
+              color="inherit"
+              startIcon={<Pets />}
+              onClick={() => window.location.href = '/admin/pets'}
+              sx={{
+                backgroundColor: activePath === '/admin/pets' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+              }}
+            >
               Manage Pets
             </Button>
-            <Button color="inherit" startIcon={<ManageSearch />} onClick={() => router.push('/admin/adoption-applications')}>
+            <Button
+              color="inherit"
+              startIcon={<ManageSearch />}
+              onClick={() => window.location.href = '/admin/adoption-applications'}
+              sx={{
+                backgroundColor: activePath === '/admin/adoption-applications' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+              }}
+            >
               Adoption Applications
             </Button>
-            <Button color="inherit" startIcon={<Group />} onClick={() => router.push('/admin/users')}>
+            <Button
+              color="inherit"
+              startIcon={<Group />}
+              onClick={() => window.location.href = '/admin/users'}
+              sx={{
+                backgroundColor: activePath === '/admin/users' ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+              }}
+            >
               Manage Users
             </Button>
           </Stack>

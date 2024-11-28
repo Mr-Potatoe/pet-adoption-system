@@ -1,157 +1,145 @@
-'use client';
-
+// app/admin/page.tsx
+'use client'
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Container,
-  Typography,
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-} from '@mui/material';
-import NavBar from '@/components/admin/NavBar';
-import PetList from '@/components/admin/PetList';
-import AddPetModal from '@/components/admin/AddPetModal';
-import PetDetailsDialog from '@/components/admin/PetDetailsDialog';
+import { Box, Grid, Card, CardContent, Typography, CircularProgress } from '@mui/material';
+import dynamic from 'next/dynamic';
+import { ApexOptions } from 'apexcharts';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import Footer from '@/components/Footer';  // Import the Footer component
-import jwt from 'jsonwebtoken';
+import NavBar from '@/components/admin/NavBar'; // Assuming your NavBar is here
 
-const Admin = () => {
-  const [pets, setPets] = useState<any[]>([]);
-  const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('darkMode') === 'true';
-    }
-    return false;
-  });
 
-  const [selectedPet, setSelectedPet] = useState<any | null>(null);
-  const [openModal, setOpenModal] = useState(false);
-  const [petAdded, setPetAdded] = useState(false); // New state to track if a pet was added
+// Dynamically import ReactApexChart to avoid SSR issues
+const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
-  const router = useRouter();
+const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
+  const [userStats, setUserStats] = useState([]);
+  const [petStats, setPetStats] = useState([]);
+  const [adoptionStats, setAdoptionStats] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('darkMode', darkMode.toString());
-    }
-  }, [darkMode]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    // Decode token and get user ID
-    try {
-      const decodedToken: any = jwt.decode(token);
-      const userId = decodedToken?.userId;
-
-      if (!userId) {
-        setError('User is not authenticated.');
-        router.push('/login');
-        return;
-      }
-    } catch (error) {
-      setError('Invalid token. Please log in again.');
-      router.push('/login');
-      return;
-    }
-
-    if (petAdded) {
-      setPetAdded(false); // Reset after fetch
-      return; // Skip fetch if a pet was just added
-    }
-
-    (async () => {
+    const fetchAnalytics = async () => {
       try {
-        const response = await fetch('/api/pets');
-        const data = await response.json();
-        if (data.success) setPets(data.pets);
-        else setError(data.message || 'Failed to load pets.');
+        const [users, pets, applications] = await Promise.all([
+          fetch('/api/analytics/users').then((res) => res.json()),
+          fetch('/api/analytics/pets').then((res) => res.json()),
+          fetch('/api/analytics/adoption-applications').then((res) => res.json()),
+        ]);
+
+        setUserStats(users);
+        setPetStats(pets);
+        setAdoptionStats(applications);
       } catch (error) {
-        setError('Error fetching pets.');
+        console.error('Error fetching analytics:', error);
       } finally {
         setLoading(false);
       }
-    })();
-  }, [router, petAdded]); // Only re-run if router or petAdded changes
+    };
 
-  const handleAddPet = (newPet: any) => {
-    setPets((prevPets) => [...prevPets, newPet]); // Optimistic update
-  };
+    fetchAnalytics();
+  }, []);
 
-  // Define themes
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Chart Configurations
+  const getChartOptions = (labels: string[], data: number[]): { series: number[]; options: ApexOptions } => ({
+    series: data,
+    options: {
+      chart: {
+        type: 'pie',
+        toolbar: { show: false },
+      },
+      labels,
+      legend: {
+        position: 'bottom',
+      },
+      theme: {
+        mode: darkMode ? 'dark' : 'light',
+      },
+      responsive: [
+        {
+          breakpoint: 768,
+          options: {
+            chart: {
+              width: '100%',
+            },
+            legend: {
+              position: 'bottom',
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  const userChart = getChartOptions(
+    userStats.map((item: any) => item.role),
+    userStats.map((item: any) => item.count)
+  );
+
+  const petChart = getChartOptions(
+    petStats.map((item: any) => item.status),
+    petStats.map((item: any) => item.count)
+  );
+
+  const adoptionChart = getChartOptions(
+    adoptionStats.map((item: any) => item.status),
+    adoptionStats.map((item: any) => item.count)
+  );
+
+  // Define themes for light and dark modes
   const darkTheme = createTheme({ palette: { mode: 'dark' } });
   const lightTheme = createTheme({ palette: { mode: 'light' } });
 
   return (
     <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
-      <NavBar onToggleTheme={setDarkMode} />
-      <Container sx={{ position: 'relative' }}>
-        <Typography
-          variant="h3"
-          gutterBottom
-          sx={{
-            py: 2,
-            fontSize: {
-              xs: '2rem', // Extra small screens
-              sm: '2.5rem', // Small screens (mobile)
-              md: '3rem', // Medium screens (tablet)
-              lg: '3.5rem', // Large screens (desktop)
-            },
-          }}
-        >
-          Admin Dashboard
+      <Box p={4}>
+        <Typography variant="h4" gutterBottom align="center">
+          Admin Analytics Dashboard
         </Typography>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom align="center">
+                  User Roles
+                </Typography>
+                <ReactApexChart options={userChart.options} series={userChart.series} type="pie" height={350} />
+              </CardContent>
+            </Card>
+          </Grid>
 
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom align="center">
+                  Pet Status
+                </Typography>
+                <ReactApexChart options={petChart.options} series={petChart.series} type="pie" height={350} />
+              </CardContent>
+            </Card>
+          </Grid>
 
-        {error && <Alert severity="error">{error}</Alert>}
-
-        <Typography variant="h5" gutterBottom>
-          Pets List
-        </Typography>
-
-        {/* Add New Pet button at the top-right */}
-        <Box position="absolute" top={20} right={20}>
-          <Button
-            variant="contained"
-            onClick={() => setOpenModal(true)}
-            sx={{
-              boxShadow: 3,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            Add New Pet
-          </Button>
-        </Box>
-
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-            <CircularProgress />
-          </Box>
-        ) : (
-          <PetList pets={pets} onSelectPet={setSelectedPet} />
-        )}
-
-        <AddPetModal
-          open={openModal}
-          onClose={() => setOpenModal(false)}
-          onAddPet={handleAddPet}
-          setPetAdded={setPetAdded} // Pass the state setter to the modal
-        />
-        <PetDetailsDialog pet={selectedPet} onClose={() => setSelectedPet(null)} />
-      </Container>
-      <Footer />
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom align="center">
+                  Adoption Applications
+                </Typography>
+                <ReactApexChart options={adoptionChart.options} series={adoptionChart.series} type="pie" height={350} />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
     </ThemeProvider>
   );
 };
 
-export default Admin;
+export default AdminDashboard;

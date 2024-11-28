@@ -5,8 +5,6 @@ import { Box, Grid, Card, CardContent, Typography, CircularProgress } from '@mui
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import NavBar from '@/components/admin/NavBar'; // Assuming your NavBar is here
-
 
 // Dynamically import ReactApexChart to avoid SSR issues
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });

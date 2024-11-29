@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
-import PetList from '@/components/adopter/PetList';
+import { Typography, Box, CircularProgress, Alert, Button, Grid, Paper } from '@mui/material';
 import PetDetailsModal from '@/components/adopter/pets-page/PetDetailsModal';
 import jwt from 'jsonwebtoken';
 
@@ -23,18 +22,23 @@ const AdopterPage = () => {
     }
 
     const fetchPets = async () => {
+      setLoading(true); // Start loading state
+
       try {
-        const response = await fetch('/api/pets?status=available'); // Fetch only available pets
+        const status = 'Available'; // You can modify this value dynamically based on user selection (e.g., Available, Pending)
+        const response = await fetch(`/api/pets?status=${status}`); // Fetch pets with the selected status
+
         const data = await response.json();
+
         if (data.success) {
-          setPets(data.pets);
+          setPets(data.pets); // Set the fetched pets in the state
         } else {
-          setError(data.message);
+          setError(data.message); // Set error message if fetching failed
         }
       } catch (err) {
-        setError('Error fetching pets');
+        setError('Error fetching pets'); // Set a generic error message in case of network or server error
       } finally {
-        setLoading(false);
+        setLoading(false); // End loading state
       }
     };
 
@@ -71,6 +75,7 @@ const AdopterPage = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Pass token in Authorization header
         },
         body: JSON.stringify({ petId, adopterId: userId }),
       });
@@ -94,21 +99,55 @@ const AdopterPage = () => {
         Available Pets for Adoption
       </Typography>
 
-      {error && <Alert severity="error" sx={{ marginBottom: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ marginBottom: 2 }}>
+          {error}
+          <Button color="inherit" size="small" sx={{ marginLeft: 1 }} onClick={() => setError('')}>
+            Dismiss
+          </Button>
+        </Alert>
+      )}
 
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
           <CircularProgress />
         </Box>
       ) : (
-        <PetList pets={pets} onViewDetails={handleViewDetails} />
+        <Grid container spacing={4} justifyContent="center">
+          {pets.length === 0 ? (
+            <Grid item xs={12}>
+              <Typography variant="h6" align="center" sx={{ py: 4 }}>
+                No pets available for adoption at the moment. Check back later!
+              </Typography>
+            </Grid>
+          ) : (
+            pets.map((pet) => (
+              <Grid item xs={12} sm={6} md={4} key={pet.pet_id}>
+                <Paper elevation={3} sx={{ padding: 2, textAlign: 'center' }}>
+                  <Typography variant="h6" gutterBottom>{pet.name}</Typography>
+                  <Typography variant="body2" color="textSecondary">{pet.breed}</Typography>
+                  <Typography variant="body2" color="textSecondary">Age: {pet.age} {pet.age_unit}</Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ marginTop: 2 }}
+                    onClick={() => handleViewDetails(pet)}
+                  >
+                    View Details
+                  </Button>
+                </Paper>
+              </Grid>
+            ))
+          )}
+        </Grid>
       )}
 
-      <PetDetailsModal 
-        open={openViewModal} 
-        pet={selectedPet} 
-        onClose={handleCloseViewModal} 
-        onAdopt={handleAdoptPet} 
+      <PetDetailsModal
+        open={openViewModal}
+        pet={selectedPet}
+        onClose={handleCloseViewModal}
+        onAdopt={handleAdoptPet}
       />
     </>
   );

@@ -9,7 +9,7 @@ const db = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: '',
-  database: 'my-pet-db',
+  database: 'mypet-db-nextjs',
 });
 
 export default db;

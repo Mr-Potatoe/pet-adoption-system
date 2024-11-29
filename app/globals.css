@@ -13,5 +13,7 @@ body {
 /* Dark Mode Styles */
 html.dark body {
   background-color: #121212;
-  color: white;
+  color: rgb(244, 243, 243);
 }
+
+

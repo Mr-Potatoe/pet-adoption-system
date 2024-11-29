@@ -25,6 +25,7 @@ const AdminPetsPage = () => {
   }, [darkMode]);
 
   useEffect(() => {
+    
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');

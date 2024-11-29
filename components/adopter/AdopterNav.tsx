@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppBar, Toolbar, Button, IconButton, Stack, Drawer, List, ListItem, ListItemText, Divider, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
-import { LightMode, DarkMode, Menu, Pets, ManageSearch, ExitToApp } from '@mui/icons-material';
+import { LightMode, DarkMode, Menu, Pets, ManageSearch, ExitToApp, Person } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 // Define light and dark theme configurations
@@ -79,6 +79,10 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
   const drawer = (
     <div>
       <List>
+      <ListItem component="button" onClick={() => router.push('/adopter')}>
+          <Pets />
+          <ListItemText primary="Available Pets" />
+        </ListItem>
         <ListItem component="button" onClick={() => router.push('/adopter/pets')}>
           <Pets />
           <ListItemText primary="Your Pets" />
@@ -86,6 +90,10 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
         <ListItem component="button" onClick={() => router.push('/adopter/adoption-applications')}>
           <ManageSearch />
           <ListItemText primary="Applications" />
+        </ListItem>
+        <ListItem component="button" onClick={() => router.push('/adopter/profile')}>
+          <Person />
+          <ListItemText primary="Profile" />
         </ListItem>
       </List>
       <Divider />
@@ -135,11 +143,17 @@ const NavBar = ({ onToggleTheme }: { onToggleTheme: (darkMode: boolean) => void 
 
           {/* Stack for Navigation (for larger screens) */}
           <Stack direction="row" spacing={2} sx={{ display: { xs: 'none', sm: 'flex' }, mx: 'auto' }}>
+          <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/adopter')}>
+             Available Pets
+            </Button>
             <Button color="inherit" startIcon={<Pets />} onClick={() => router.push('/adopter/pets')}>
              Your Pets
             </Button>
             <Button color="inherit" startIcon={<ManageSearch />} onClick={() => router.push('/adopter/adoption-applications')}>
               Applications
+            </Button>
+            <Button color="inherit" startIcon={<Person />} onClick={() => router.push('/adopter/profile')}>
+              Profile
             </Button>
           </Stack>
 

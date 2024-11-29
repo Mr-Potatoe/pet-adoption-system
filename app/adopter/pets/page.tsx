@@ -2,19 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
+import { Typography, Box, CircularProgress, Alert, Grid, Card, CardContent, Button, Snackbar, Tab, Tabs } from '@mui/material';
 import PetList from '@/components/adopter/pets-page/PetList';
-import PetFormModal from '@/components/adopter/pets-page/PetFormModal';
+import PetDetailsModal from '@/components/adopter/pets-page/PetDetailsModal';
 import jwt from 'jsonwebtoken';
 
-const MyPetsPage = () => {
+const AdopterPetsPage = () => {
   const [pets, setPets] = useState<any[]>([]);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPet, setSelectedPet] = useState<any | null>(null);
-  const [openFormModal, setOpenFormModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [openViewModal, setOpenViewModal] = useState(false);
+  const [tabValue, setTabValue] = useState(0); // Track selected tab for filter
+  const [openSnackbar, setOpenSnackbar] = useState(false); // Snackbar for notifications
   const router = useRouter();
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -22,50 +27,60 @@ const MyPetsPage = () => {
       router.push('/login');
       return;
     }
-
-    const fetchMyPets = async () => {
+  
+    const fetchPets = async () => {
+      setLoading(true); // Start loading state
+  
       try {
-        const response = await fetch('/api/users-pets', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`, // Add Authorization header with Bearer token
-          },
-        });
+        const decodedToken: any = jwt.decode(token);
+        const userId = decodedToken?.userId;
+  
+        if (!userId) {
+          setError('Unable to retrieve user ID from token');
+          return;
+        }
+  
+        const status = tabValue === 0 ? 'All' : tabValue === 1 ? 'Adopted' : 'Available'; // Dynamic status based on tab
+        const response = await fetch(`/api/adopter-pets?adopterId=${userId}&status=${status}`); // Fetch adopter-specific pets
+  
         const data = await response.json();
+        console.log('API Response:', data); // Log API response
+  
         if (data.success) {
-          setPets(data.pets);
+          setPets(data.pets); // Set the fetched pets in the state
         } else {
-          setError(data.message);
+          setError(data.message); // Set error message if fetching failed
         }
       } catch (err) {
-        setError('Error fetching your pets');
+        setError('Error fetching pets'); // Set a generic error message in case of network or server error
       } finally {
-        setLoading(false);
+        setLoading(false); // End loading state
       }
     };
-
-    fetchMyPets();
-  }, [router]);
-
-  const handleOpenFormModal = (pet: any = null) => {
+  
+    fetchPets();
+  }, [router, tabValue]); // Re-run when tabValue changes
+  
+  
+  const handleViewDetails = (pet: any) => {
     setSelectedPet(pet);
-    setIsEditing(!!pet);
-    setOpenFormModal(true);
+    setOpenViewModal(true);
   };
 
-  const handleCloseFormModal = () => {
-    setOpenFormModal(false);
+  const handleCloseViewModal = () => {
+    setOpenViewModal(false);
     setSelectedPet(null);
   };
 
-  const handleSavePet = async (pet: any) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('User not authenticated');
-        return;
-      }
+  // onAdopt function to handle adoption logic
+  const handleAdoptPet = async (petId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('User not authenticated');
+      return;
+    }
 
+    try {
       const decodedToken: any = jwt.decode(token);
       const userId = decodedToken?.userId;
 
@@ -74,85 +89,106 @@ const MyPetsPage = () => {
         return;
       }
 
-      // Add status and user_id if not editing an existing pet
-      const petData = {
-        ...pet,
-        status: pet.status || 'available', // default status if not provided
-        user_id: userId,
-      };
-
-      const endpoint = isEditing ? `/api/pets/${pet.pet_id}` : '/api/pets';
-      const method = isEditing ? 'PUT' : 'POST';
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(petData),
+      const response = await fetch(`/api/adopt-pet`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ petId, adopterId: userId }),
       });
 
       const data = await response.json();
+
       if (data.success) {
-        if (isEditing) {
-          setPets((prevPets) =>
-            prevPets.map((p) => (p.pet_id === pet.pet_id ? data.pet : p))
-          );
-        } else {
-          setPets((prevPets) => [...prevPets, data.pet]);
-        }
-        handleCloseFormModal();
+        setPets((prevPets) => prevPets.filter((pet) => pet.pet_id !== petId)); // Remove adopted pet from the list
+        setError('');
+        setOpenSnackbar(true); // Show success message
       } else {
         setError(data.message);
       }
     } catch (err) {
-      setError('Error saving pet');
+      setError('Error adopting pet');
     }
   };
 
-
-  const handleDeletePet = async (petId: string) => {
-    try {
-      const response = await fetch(`/api/pets/${petId}`, { method: 'DELETE' });
-      const data = await response.json();
-      if (data.success) {
-        setPets((prevPets) => prevPets.filter((pet) => pet.pet_id !== petId));
-      } else {
-        setError(data.message);
-      }
-    } catch (err) {
-      setError('Error deleting pet');
-    }
+  const handleSnackbarClose = () => {
+    setOpenSnackbar(false);
   };
 
   return (
     <>
-      <Typography variant="h3" gutterBottom align="center" color="primary.main" sx={{ py: 4 }}>
-        My Pets
+      <Typography variant="h4" gutterBottom align="center" color="primary.main" sx={{ py: 4 }}>
+        Your Pets and Adoption Status
       </Typography>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-        <Button variant="contained" color="primary" onClick={() => handleOpenFormModal()}>
-          Add New Pet
-        </Button>
+      {/* Tab Navigation to filter by Available, Adopted, or All Pets */}
+      <Box sx={{ maxWidth: 400, margin: '0 auto' }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="pet status filter">
+          <Tab label="All Pets" />
+          <Tab label="Adopted Pets" />
+          <Tab label="Available Pets" />
+        </Tabs>
       </Box>
 
       {error && <Alert severity="error" sx={{ marginBottom: 2 }}>{error}</Alert>}
 
+      {/* Loading indicator */}
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
           <CircularProgress />
         </Box>
       ) : (
-        <PetList pets={pets} onEdit={handleOpenFormModal} onDelete={handleDeletePet} />
+        <Box sx={{ py: 4 }}>
+          {/* Conditional rendering for pet list */}
+          {pets.length === 0 ? (
+            <Typography variant="h6" align="center" sx={{ py: 4 }}>
+              No pets available under this filter.
+            </Typography>
+          ) : (
+            <Grid container spacing={3}>
+              {pets.map((pet) => (
+                <Grid item xs={12} sm={6} md={4} key={pet.pet_id}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6">{pet.name}</Typography>
+                      <Typography variant="body2">{pet.type} - {pet.breed}</Typography>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{ mt: 2 }}
+                        onClick={() => handleViewDetails(pet)}
+                      >
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
       )}
 
-      <PetFormModal
-        open={openFormModal}
+      {/* Pet Details Modal */}
+      <PetDetailsModal
+        open={openViewModal}
         pet={selectedPet}
-        onClose={handleCloseFormModal}
-        onSave={handleSavePet}
+        onClose={handleCloseViewModal}
+        onAdopt={handleAdoptPet} // Pass the handleAdoptPet function to the modal
+      />
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        message="Pet adopted successfully!"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
     </>
   );
 };
 
-export default MyPetsPage;
+export default AdopterPetsPage;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db'; // Adjust the path if necessary
 import { ResultSetHeader } from 'mysql2/promise'; // Import ResultSetHeader
+import bcrypt from 'bcryptjs'; // Add bcrypt for password hashing
 
 interface User {
   username: string;
@@ -13,21 +14,28 @@ interface User {
 // PUT: Update a specific user by ID
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const userId = parseInt(params.id, 10);
-  const { username, email, role, profile_picture }: { username: string; email: string; role: string; profile_picture: string | null } = await req.json();
+  const { username, email, password, role, profile_picture }: User = await req.json();
+
+  // Log incoming data for debugging
+  console.log('Incoming data:', { username, email, password, role, profile_picture });
 
   if (!username || !email || !role) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
   }
 
   try {
-    // Type the result as ResultSetHeader
-    const result: ResultSetHeader = await query('UPDATE users SET username = ?, email = ?, role = ?, profile_picture = ? WHERE user_id = ?', [
-      username,
-      email,
-      role,
-      profile_picture,
-      userId,
-    ]);
+    let updateFields: Array<any> = [username, email, role, profile_picture ?? null, userId];
+    let updateQuery = 'UPDATE users SET username = ?, email = ?, role = ?, profile_picture = ? WHERE user_id = ?';
+
+    if (password) {
+      // If password is provided, hash it and include it in the update
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateQuery = 'UPDATE users SET username = ?, email = ?, role = ?, profile_picture = ?, password_hash = ? WHERE user_id = ?';
+      updateFields = [username, email, role, profile_picture ?? null, hashedPassword, userId];
+    }
+
+    // Execute the update query
+    const result: ResultSetHeader = await query(updateQuery, updateFields);
 
     if (result.affectedRows === 0) {
       return NextResponse.json({ error: 'User not found or no changes made.' }, { status: 404 });
@@ -35,9 +43,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     return NextResponse.json({ message: 'User updated successfully.' });
   } catch (error) {
+    console.error('Error:', error); // Log error for better debugging
     return NextResponse.json({ error: 'Failed to update user.' }, { status: 500 });
   }
 }
+
 
 
 

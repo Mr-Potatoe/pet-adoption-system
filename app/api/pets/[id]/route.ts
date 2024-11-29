@@ -18,28 +18,35 @@ interface Pet {
   age_unit: 'days' | 'weeks' | 'months' | 'years';
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!params.id) {
-    return NextResponse.json({ message: 'ID is required' }, { status: 400 });
-  }
+// GET all pets based on status (Available, Pending, or both)
+export async function GET(req: NextRequest) {
+  const status = req.nextUrl.searchParams.get('status'); // Correctly access the status query parameter
 
-  console.log('Pet ID:', params.id); // Debugging the ID
+  let queryString = 'SELECT * FROM pets WHERE status IN ("Available", "Pending")'; // Default to available and pending pets
+  const queryParams: any[] = [];
+
+  // If a specific status is provided, use it to filter
+  if (status && ['Available', 'Pending'].includes(status)) {
+    queryString = 'SELECT * FROM pets WHERE status = ?';
+    queryParams.push(status); // Filter based on the status passed in the query
+  }
 
   try {
-    const result = await query<Pet[]>('SELECT * FROM pets WHERE pet_id = ?', [Number(params.id)]); // Make sure the ID is converted to number if necessary
+    const pets = await query<Pet[]>(queryString, queryParams);
 
-    console.log('Database result:', result); // Log the result for debugging
-
-    if (result.length === 0) {
-      return NextResponse.json({ message: 'Pet not found', success: false }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, pet: result[0] }); // Return the pet details in the response
+    return NextResponse.json({
+      success: true,
+      pets,
+    });
   } catch (error) {
-    console.error('Error fetching pet:', error);
-    return NextResponse.json({ message: 'Error fetching pet', success: false }, { status: 500 });
+    console.error('Error fetching pets:', error);
+    return NextResponse.json(
+      { success: false, message: 'Error fetching pets' },
+      { status: 500 }
+    );
   }
 }
+
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { id } = params;
@@ -129,5 +136,50 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: 'Error deleting pet' }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const { id } = params; // Ensure `id` is extracted correctly
+  if (!id) {
+    return NextResponse.json({ message: 'Pet ID is required' }, { status: 400 });
+  }
+
+  const data = await req.json();
+
+  try {
+    const updateQuery = `
+      UPDATE pets 
+      SET name = ?, breed = ?, age = ?, description = ?, medical_history = ?, status = ?, 
+          image_url = ?, gender = ?, contact = ?, location = ?, age_unit = ? 
+      WHERE pet_id = ?
+    `;
+
+    const result = await query(
+      updateQuery,
+      [
+        data.name,
+        data.breed,
+        data.age,
+        data.description,
+        data.medical_history,
+        data.status,
+        data.image_url,
+        data.gender,
+        data.contact,
+        data.location,
+        data.age_unit,
+        id,
+      ]
+    );
+
+    if ((result as any).affectedRows === 0) {
+      return NextResponse.json({ message: 'Pet not found or not updated' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Pet updated successfully' });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: 'Error updating pet' }, { status: 500 });
   }
 }

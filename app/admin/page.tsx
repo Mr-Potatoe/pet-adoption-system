@@ -1,9 +1,12 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { Box, Grid, Card, CardContent, Typography, CircularProgress } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useRouter } from 'next/navigation'; // Updated import
+import jwt from 'jsonwebtoken';
 
 // Dynamically import ReactApexChart to avoid SSR issues
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
@@ -13,8 +16,32 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
   const [petStats, setPetStats] = useState([]);
   const [adoptionStats, setAdoptionStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter(); // Using the new Next.js navigation hook
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login'); // Use the new router navigation
+      return;
+    }
+
+    try {
+      const decodedToken: any = jwt.decode(token);
+      const userId = decodedToken?.userId;
+
+      if (!userId) {
+        setError('User is not authenticated.');
+        router.push('/login');
+        return;
+      }
+    } catch (error) {
+      setError('Invalid token. Please log in again.');
+      router.push('/login');
+      return;
+    }
+
+    // Fetch analytics data
     const fetchAnalytics = async () => {
       try {
         const [users, pets, applications] = await Promise.all([
@@ -34,7 +61,7 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
     };
 
     fetchAnalytics();
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (
@@ -51,24 +78,24 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
       chart: {
         type: 'pie',
         toolbar: { show: false },
-        background: darkMode ? '#121212' : '#ffffff', // Adjust background color
+        background: darkMode ? '#121212' : '#ffffff',
       },
       labels,
       legend: {
         position: 'bottom',
         labels: {
-          colors: darkMode ? ['#ffffff'] : ['#000000'], // Adjust legend text color
+          colors: darkMode ? ['#ffffff'] : ['#000000'],
         },
       },
       plotOptions: {
         pie: {
           donut: {
-            size: '50%', // Optionally adjust pie chart size
+            size: '50%',
           },
         },
       },
       theme: {
-        mode: darkMode ? 'dark' : 'light', // Ensure chart theme is applied
+        mode: darkMode ? 'dark' : 'light',
       },
       responsive: [
         {
@@ -102,16 +129,16 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
   );
 
   // Define themes for light and dark modes
-  const darkTheme = createTheme({
+  const theme = createTheme({
     palette: {
-      mode: 'dark',
+      mode: darkMode ? 'dark' : 'light',
       background: {
-        default: '#121212',
-        paper: '#1D1D1D',
+        default: darkMode ? '#121212' : '#ffffff',
+        paper: darkMode ? '#1D1D1D' : '#f5f5f5',
       },
       text: {
-        primary: '#fff',
-        secondary: '#b0b0b0',
+        primary: darkMode ? '#ffffff' : '#000000',
+        secondary: darkMode ? '#b0b0b0' : '#4f4f4f',
       },
     },
     typography: {
@@ -119,45 +146,18 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
       h4: {
         fontWeight: 700,
         fontSize: '2rem',
-        color: '#fff',
+        color: darkMode ? '#fff' : '#000',
       },
       h6: {
         fontWeight: 600,
         fontSize: '1.25rem',
-        color: '#fff',
-      },
-    },
-  });
-
-  const lightTheme = createTheme({
-    palette: {
-      mode: 'light',
-      background: {
-        default: '#ffffff',
-        paper: '#f5f5f5',
-      },
-      text: {
-        primary: '#000',
-        secondary: '#4f4f4f',
-      },
-    },
-    typography: {
-      fontFamily: 'Roboto, sans-serif',
-      h4: {
-        fontWeight: 700,
-        fontSize: '2rem',
-        color: '#000',
-      },
-      h6: {
-        fontWeight: 600,
-        fontSize: '1.25rem',
-        color: '#000',
+        color: darkMode ? '#fff' : '#000',
       },
     },
   });
 
   return (
-    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+    <ThemeProvider theme={theme}>
       <Box p={6}>
         <Typography variant="h4" gutterBottom align="center">
           Admin Analytics Dashboard
@@ -168,7 +168,7 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
               sx={{
                 backgroundColor: (theme) => theme.palette.background.paper,
                 color: (theme) => theme.palette.text.primary,
-                boxShadow: 3, // Added box shadow for better visibility
+                boxShadow: 3,
               }}
             >
               <CardContent>
@@ -185,7 +185,7 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
               sx={{
                 backgroundColor: (theme) => theme.palette.background.paper,
                 color: (theme) => theme.palette.text.primary,
-                boxShadow: 3, // Added box shadow for better visibility
+                boxShadow: 3,
               }}
             >
               <CardContent>
@@ -202,7 +202,7 @@ const AdminDashboard = ({ darkMode }: { darkMode: boolean }) => {
               sx={{
                 backgroundColor: (theme) => theme.palette.background.paper,
                 color: (theme) => theme.palette.text.primary,
-                boxShadow: 3, // Added box shadow for better visibility
+                boxShadow: 3,
               }}
             >
               <CardContent>

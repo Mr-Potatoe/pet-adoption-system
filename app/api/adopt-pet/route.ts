@@ -71,3 +71,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function GET(req: NextRequest) {
+  const url = req.nextUrl; // Use nextUrl to access query parameters
+  const adopterId = url.searchParams.get('adopterId');
+  const status = url.searchParams.get('status');
+
+  if (!adopterId || !status) {
+    return NextResponse.json({ success: false, message: 'Adopter ID and status are required' }, { status: 400 });
+  }
+
+  try {
+    const [petRows] = await db.query<RowDataPacket[]>(
+      'SELECT * FROM pets WHERE adopter_id = ? AND status = ?',
+      [adopterId, status]
+    );
+
+    return NextResponse.json({ success: true, pets: petRows });
+  } catch (error: any) {
+    console.error('Error fetching pets:', error.message);
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+  }
+}

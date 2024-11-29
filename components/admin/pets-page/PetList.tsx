@@ -55,6 +55,7 @@ const PetList = ({
     age_unit: 'years', // Default age unit
   });
 
+  const [errors, setErrors] = useState<any>({}); // To store validation errors
 
   // Extract unique breeds for the filter dropdown
   const breeds = Array.from(new Set(pets.map((pet) => pet.breed))).sort();
@@ -86,8 +87,24 @@ const PetList = ({
   };
 
   const handleAddPetSubmit = () => {
-    onAddPet(newPet); // Call the onAddPet function passed as prop
-    setOpenAddPetDialog(false); // Close the Add Pet dialog
+    const newErrors: any = {};
+
+    // Validate the new pet form
+    if (!newPet.name) newErrors.name = 'Name is required';
+    if (!newPet.breed) newErrors.breed = 'Breed is required';
+    if (!newPet.age || isNaN(Number(newPet.age))) newErrors.age = 'Valid age is required';
+    if (!newPet.description) newErrors.description = 'Description is required';
+    if (!newPet.contact) newErrors.contact = 'Contact is required';
+    if (!newPet.location) newErrors.location = 'Location is required';
+    if (!newPet.gender) newErrors.gender = 'Gender is required';
+    if (!newPet.image_url) newErrors.image_url = 'Image URL is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors); // Set errors
+    } else {
+      onAddPet(newPet); // Call the onAddPet function passed as prop
+      setOpenAddPetDialog(false); // Close the Add Pet dialog
+    }
   };
 
   const handleEditButtonClick = (pet: any) => {
@@ -96,7 +113,21 @@ const PetList = ({
   };
 
   const handleEditPetSubmit = () => {
-    if (petBeingEdited) {
+    const newErrors: any = {};
+
+    // Validate the edited pet form
+    if (!petBeingEdited?.name) newErrors.name = 'Name is required';
+    if (!petBeingEdited?.breed) newErrors.breed = 'Breed is required';
+    if (!petBeingEdited?.age || isNaN(Number(petBeingEdited?.age))) newErrors.age = 'Valid age is required';
+    if (!petBeingEdited?.description) newErrors.description = 'Description is required';
+    if (!petBeingEdited?.contact) newErrors.contact = 'Contact is required';
+    if (!petBeingEdited?.location) newErrors.location = 'Location is required';
+    if (!petBeingEdited?.gender) newErrors.gender = 'Gender is required';
+    if (!petBeingEdited?.image_url) newErrors.image_url = 'Image URL is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors); // Set errors
+    } else {
       onEditPet(petBeingEdited); // Pass the edited pet to parent
       setOpenEditDialog(false); // Close the Edit Pet dialog
     }
@@ -154,7 +185,7 @@ const PetList = ({
                   <CardMedia
                     component="img"
                     height="200"
-                    image={pet.image_url || '/default-pet-image.jpg'}
+                    image={pet.image_url || '/pet.png'}
                     alt={pet.name}
                   />
                   <CardContent>
@@ -232,101 +263,75 @@ const PetList = ({
         <DialogTitle>Add New Pet</DialogTitle>
         <DialogContent>
           <TextField
-            label="Pet Name"
+            label="Name"
             fullWidth
-            value={newPet.name || ''}
+            value={newPet.name}
             onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
+            error={!!errors.name}
+            helperText={errors.name}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Breed"
             fullWidth
-            value={newPet.breed || ''}
+            value={newPet.breed}
             onChange={(e) => setNewPet({ ...newPet, breed: e.target.value })}
+            error={!!errors.breed}
+            helperText={errors.breed}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Age"
             fullWidth
-            value={newPet.age || ''}
+            value={newPet.age}
             onChange={(e) => setNewPet({ ...newPet, age: e.target.value })}
+            error={!!errors.age}
+            helperText={errors.age}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Description"
             fullWidth
-            multiline
-            rows={4}
-            value={newPet.description || ''}
+            value={newPet.description}
             onChange={(e) => setNewPet({ ...newPet, description: e.target.value })}
+            error={!!errors.description}
+            helperText={errors.description}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Medical History"
             fullWidth
-            multiline
-            rows={4}
-            value={newPet.medical_history || ''}
+            value={newPet.medical_history}
             onChange={(e) => setNewPet({ ...newPet, medical_history: e.target.value })}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Contact"
             fullWidth
-            value={newPet.contact || ''}
+            value={newPet.contact}
             onChange={(e) => setNewPet({ ...newPet, contact: e.target.value })}
+            error={!!errors.contact}
+            helperText={errors.contact}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Location"
             fullWidth
-            value={newPet.location || ''}
+            value={newPet.location}
             onChange={(e) => setNewPet({ ...newPet, location: e.target.value })}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Gender"
-            fullWidth
-            value={newPet.gender || ''}
-            onChange={(e) => setNewPet({ ...newPet, gender: e.target.value })}
+            error={!!errors.location}
+            helperText={errors.location}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Image URL"
             fullWidth
-            value={newPet.image_url || ''}
+            value={newPet.image_url}
             onChange={(e) => setNewPet({ ...newPet, image_url: e.target.value })}
+            error={!!errors.image_url}
+            helperText={errors.image_url}
             sx={{ mb: 2 }}
           />
-
-          {/* Status field */}
-          <TextField
-            select
-            label="Status"
-            fullWidth
-            value={newPet.status || 'Available'}
-            onChange={(e) => setNewPet({ ...newPet, status: e.target.value })}
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="Available">Available</MenuItem>
-            <MenuItem value="Adopted">Adopted</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-          </TextField>
-
-          {/* Age Unit */}
-          <TextField
-            select
-            label="Age Unit"
-            fullWidth
-            value={newPet.age_unit || 'years'}
-            onChange={(e) => setNewPet({ ...newPet, age_unit: e.target.value })}
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="years">Years</MenuItem>
-            <MenuItem value="months">Months</MenuItem>
-            <MenuItem value="days">Days</MenuItem>
-          </TextField>
-
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenAddPetDialog(false)} color="primary">
@@ -338,18 +343,19 @@ const PetList = ({
         </DialogActions>
       </Dialog>
 
-
       {/* Edit Pet Dialog */}
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
         <DialogTitle>Edit Pet</DialogTitle>
         <DialogContent>
           <TextField
-            label="Pet Name"
+            label="Name"
             fullWidth
             value={petBeingEdited?.name || ''}
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, name: e.target.value })
             }
+            error={!!errors.name}
+            helperText={errors.name}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -359,6 +365,8 @@ const PetList = ({
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, breed: e.target.value })
             }
+            error={!!errors.breed}
+            helperText={errors.breed}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -368,24 +376,24 @@ const PetList = ({
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, age: e.target.value })
             }
+            error={!!errors.age}
+            helperText={errors.age}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Description"
             fullWidth
-            multiline
-            rows={4}
             value={petBeingEdited?.description || ''}
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, description: e.target.value })
             }
+            error={!!errors.description}
+            helperText={errors.description}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Medical History"
             fullWidth
-            multiline
-            rows={4}
             value={petBeingEdited?.medical_history || ''}
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, medical_history: e.target.value })
@@ -399,6 +407,8 @@ const PetList = ({
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, contact: e.target.value })
             }
+            error={!!errors.contact}
+            helperText={errors.contact}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -408,15 +418,8 @@ const PetList = ({
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, location: e.target.value })
             }
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Gender"
-            fullWidth
-            value={petBeingEdited?.gender || ''}
-            onChange={(e) =>
-              setPetBeingEdited({ ...petBeingEdited, gender: e.target.value })
-            }
+            error={!!errors.location}
+            helperText={errors.location}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -426,41 +429,10 @@ const PetList = ({
             onChange={(e) =>
               setPetBeingEdited({ ...petBeingEdited, image_url: e.target.value })
             }
+            error={!!errors.image_url}
+            helperText={errors.image_url}
             sx={{ mb: 2 }}
           />
-
-          {/* Status field */}
-          <TextField
-            select
-            label="Status"
-            fullWidth
-            value={petBeingEdited?.status || 'Available'}
-            onChange={(e) =>
-              setPetBeingEdited({ ...petBeingEdited, status: e.target.value })
-            }
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="Available">Available</MenuItem>
-            <MenuItem value="Adopted">Adopted</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-          </TextField>
-
-          {/* Age Unit */}
-          <TextField
-            select
-            label="Age Unit"
-            fullWidth
-            value={petBeingEdited?.age_unit || 'years'}
-            onChange={(e) =>
-              setPetBeingEdited({ ...petBeingEdited, age_unit: e.target.value })
-            }
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="years">Years</MenuItem>
-            <MenuItem value="months">Months</MenuItem>
-            <MenuItem value="days">Days</MenuItem>
-          </TextField>
-
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEditDialog(false)} color="primary">
@@ -471,7 +443,6 @@ const PetList = ({
           </Button>
         </DialogActions>
       </Dialog>
-
     </Box>
   );
 };

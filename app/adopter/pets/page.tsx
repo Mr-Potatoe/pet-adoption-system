@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Typography, Box, CircularProgress, Alert, Grid, Card, CardContent, Button, Snackbar, Tab, Tabs } from '@mui/material';
-import PetList from '@/components/adopter/pets-page/PetList';
+import { Typography, Box, CircularProgress, Alert, Grid, Card, CardContent, Button, Snackbar, Tab, Tabs, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import PetDetailsModal from '@/components/adopter/pets-page/PetDetailsModal';
 import jwt from 'jsonwebtoken';
 
@@ -40,8 +39,7 @@ const AdopterPetsPage = () => {
           return;
         }
   
-        const status = tabValue === 0 ? 'All' : tabValue === 1 ? 'Adopted' : 'Available'; // Dynamic status based on tab
-        const response = await fetch(`/api/adopter-pets?adopterId=${userId}&status=${status}`); // Fetch adopter-specific pets
+        const response = await fetch(`/api/adopter-pets?adopterId=${userId}`); // Fetch adopter-specific pets
   
         const data = await response.json();
         console.log('API Response:', data); // Log API response
@@ -59,9 +57,8 @@ const AdopterPetsPage = () => {
     };
   
     fetchPets();
-  }, [router, tabValue]); // Re-run when tabValue changes
-  
-  
+  }, [router]); // Re-run when router changes
+
   const handleViewDetails = (pet: any) => {
     setSelectedPet(pet);
     setOpenViewModal(true);
@@ -72,7 +69,6 @@ const AdopterPetsPage = () => {
     setSelectedPet(null);
   };
 
-  // onAdopt function to handle adoption logic
   const handleAdoptPet = async (petId: string) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -116,18 +112,25 @@ const AdopterPetsPage = () => {
     setOpenSnackbar(false);
   };
 
+  // Separate pets into categories
+  const separatedPets = {
+    adopted: pets.filter(pet => pet.status === 'Adopted'),
+    pending: pets.filter(pet => pet.status === 'Pending'),
+    owners: pets.filter(pet => pet.ownerId === pet.adopterId), // Assuming pet.ownerId refers to the adopter
+  };
+
   return (
     <>
       <Typography variant="h4" gutterBottom align="center" color="primary.main" sx={{ py: 4 }}>
         Your Pets and Adoption Status
       </Typography>
 
-      {/* Tab Navigation to filter by Available, Adopted, or All Pets */}
+      {/* Tab Navigation to filter by Adopted or Pending Pets */}
       <Box sx={{ maxWidth: 400, margin: '0 auto' }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="pet status filter">
-          <Tab label="All Pets" />
           <Tab label="Adopted Pets" />
-          <Tab label="Available Pets" />
+          <Tab label="Pending Pets" />
+          <Tab label="Owner's Pets" />
         </Tabs>
       </Box>
 
@@ -141,32 +144,103 @@ const AdopterPetsPage = () => {
       ) : (
         <Box sx={{ py: 4 }}>
           {/* Conditional rendering for pet list */}
-          {pets.length === 0 ? (
-            <Typography variant="h6" align="center" sx={{ py: 4 }}>
-              No pets available under this filter.
-            </Typography>
-          ) : (
-            <Grid container spacing={3}>
-              {pets.map((pet) => (
-                <Grid item xs={12} sm={6} md={4} key={pet.pet_id}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6">{pet.name}</Typography>
-                      <Typography variant="body2">{pet.type} - {pet.breed}</Typography>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        onClick={() => handleViewDetails(pet)}
-                      >
-                        View Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+          {tabValue === 0 && (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Breed</TableCell>
+                    <TableCell>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {separatedPets.adopted.map((pet) => (
+                    <TableRow key={pet.pet_id}>
+                      <TableCell>{pet.name}</TableCell>
+                      <TableCell>{pet.type}</TableCell>
+                      <TableCell>{pet.breed}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleViewDetails(pet)}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {tabValue === 1 && (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Breed</TableCell>
+                    <TableCell>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {separatedPets.pending.map((pet) => (
+                    <TableRow key={pet.pet_id}>
+                      <TableCell>{pet.name}</TableCell>
+                      <TableCell>{pet.type}</TableCell>
+                      <TableCell>{pet.breed}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleViewDetails(pet)}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {tabValue === 2 && (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Breed</TableCell>
+                    <TableCell>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {separatedPets.owners.map((pet) => (
+                    <TableRow key={pet.pet_id}>
+                      <TableCell>{pet.name}</TableCell>
+                      <TableCell>{pet.type}</TableCell>
+                      <TableCell>{pet.breed}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleViewDetails(pet)}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </Box>
       )}

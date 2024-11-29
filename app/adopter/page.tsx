@@ -95,7 +95,7 @@ const AdopterPage = () => {
 
   return (
     <>
-      <Typography variant="h3" gutterBottom align="center" color="primary.main" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom align="center" color="primary.main" sx={{ py: 4 }}>
         Available Pets for Adoption
       </Typography>
 
